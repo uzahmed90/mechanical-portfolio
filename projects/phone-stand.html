@@ -13,8 +13,8 @@
 
     <h2>Project overview</h2>
     <p>
-      This project is a custom phone stand that I designed and modeled in Autodesk Inventor, 
-      then manufactured using a MakerBot 3D printer. The goal was to create a compact stand 
+      This project is a custom phone stand that I designed and modeled in Autodesk Inventor,
+      then manufactured using the MakerBot 3D printer. The goal was to create a compact stand
       that supports the phone at a comfortable viewing angle while remaining stable during use.
     </p>
 
@@ -26,17 +26,18 @@
     </ul>
 
     <h2>Design process</h2>
+
     <h3>Concept and requirements</h3>
     <p>
-      I began by listing basic requirements such as minimum opening width for the phone, 
-      target viewing angle. From there I sketched several possible profiles 
-      for the stand and selected a design that balanced stability and printability.
+      I began by listing basic requirements such as minimum opening width for the phone,
+      and target viewing angle. From there I sketched several
+      possible profiles for the stand and selected a design that balanced stability and printability.
     </p>
 
     <h3>CAD modeling in Autodesk Inventor</h3>
     <p>
-      I created the main geometry as a parametric part in Autodesk Inventor. 
-      Key dimensions such as phone thickness, height of the support surface, 
+      I created the main geometry as a parametric part in Autodesk Inventor.
+      Key dimensions such as phone thickness, height of the support surface,
       and base length were defined with parameters so they could be adjusted easily in future iterations.
     </p>
 
@@ -49,32 +50,134 @@
 
     <h2>Results</h2>
     <p>
-      The final print met the design goals. The stand holds the phone securely and is comfortable 
-      for watching videos or checking notifications. If I rework on the design, I plan to test 
-      different angles and add a soft contact surface to protect the phone finish.
-      I would also cut holes out to include a charging port.
+      The final print met the design goals. The stand holds the phone securely and is comfortable
+      for watching videos or checking notifications. If I rework on the design, I plan to test
+      different angles, add a soft contact surface to protect the phone finish, and make a section for a charging port.
     </p>
 
     <h2>3D model viewer</h2>
     <p>
-      A live 3D view of the Inventor model will appear here once the STL file is uploaded. 
-      This section will allow reviewers to orbit and inspect the stand geometry directly in the browser.
+      You can rotate, zoom, and inspect the phone stand model in 3D.
+      If the viewer is blank, give it a moment to load.
     </p>
 
-    <!-- 3D viewer placeholder  we will wire this up after you upload the STL file -->
-    <div id="viewer" style="width: 100%; height: 400px; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center;">
-      <p>3D viewer coming soon.</p>
+    <div id="viewer"
+         style="width: 100%; height: 400px; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center;">
+      <p>Loading 3D model…</p>
     </div>
 
     <h2>Files</h2>
     <ul>
-      <li>Inventor part file <em>(to be uploaded)</em></li>
-      <li>STL for 3D printing <em>(to be uploaded)</em></li>
+      <li>
+        <a href="../assets/phone-stand/Phone Stand Eng 101.stl" download>
+          STL file for 3D printing
+        </a>
+      </li>
+      <li>
+        <a href="../assets/phone-stand/hahahaurwelcome.ipt" download>
+          Autodesk Inventor part file
+        </a>
+      </li>
+      <li>
+        <a href="../assets/phone-stand/AHMED egm Phone Stand Sketches.pdf" target="_blank">
+          Engineering drawing  PDF
+        </a>
+      </li>
     </ul>
 
     <p>
-      For more projects, return to the main 
+      For more projects, return to the main
       <a href="../index.html">portfolio page</a>.
     </p>
+
+    <!-- three.js and STL viewer scripts -->
+    <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.160.0/examples/js/loaders/STLLoader.js"></script>
+    <script src="https://unpkg.com/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+
+    <script>
+      (function () {
+        const container = document.getElementById("viewer");
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xf5f5f5);
+
+        const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 2000);
+        camera.position.set(150, 100, 150);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(width, height);
+        renderer.setPixelRatio(window.devicePixelRatio || 1);
+        container.innerHTML = "";
+        container.appendChild(renderer.domElement);
+
+        const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambient);
+
+        const dir = new THREE.DirectionalLight(0xffffff, 0.8);
+        dir.position.set(100, 200, 100);
+        scene.add(dir);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.08;
+        controls.target.set(0, 0, 0);
+
+        const loader = new THREE.STLLoader();
+
+        loader.load(
+          "../assets/phone-stand/Phone Stand Eng 101.stl",
+          function (geometry) {
+            geometry.computeBoundingBox();
+            const material = new THREE.MeshPhongMaterial({
+              color: 0x999999,
+              specular: 0x111111,
+              shininess: 40
+            });
+
+            const mesh = new THREE.Mesh(geometry, material);
+
+            // center the model
+            const bbox = geometry.boundingBox;
+            const center = bbox.getCenter(new THREE.Vector3());
+            mesh.position.sub(center);
+
+            scene.add(mesh);
+
+            // fit camera to model
+            const size = bbox.getSize(new THREE.Vector3()).length();
+            const distance = size / (2 * Math.tan(Math.PI * camera.fov / 360));
+            camera.position.set(distance, distance, distance);
+            camera.lookAt(0, 0, 0);
+            controls.update();
+          },
+          undefined,
+          function (error) {
+            console.error(error);
+            container.innerHTML = "<p>Could not load 3D model.</p>";
+          }
+        );
+
+        function onWindowResize() {
+          const w = container.clientWidth;
+          const h = container.clientHeight;
+          camera.aspect = w / h;
+          camera.updateProjectionMatrix();
+          renderer.setSize(w, h);
+        }
+
+        window.addEventListener("resize", onWindowResize);
+
+        function animate() {
+          requestAnimationFrame(animate);
+          controls.update();
+          renderer.render(scene, camera);
+        }
+
+        animate();
+      })();
+    </script>
   </body>
 </html>
